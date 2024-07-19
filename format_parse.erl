@@ -69,10 +69,12 @@ construct_code([P,N]) -> {P,N,?NUM_DEFAULT,?TEXT_DEFAULT};
 construct_code([P]) -> {P,?NUM_DEFAULT,?NUM_DEFAULT,?TEXT_DEFAULT}.
 
 -define(PARSE_CLAUSE(Spec), parse(<<Spec, R/binary>>, T, F, PC)).
+-define(PARSE_CLAUSE_EMPTY_FMT(Spec), parse(<<Spec, R/binary>>, T, [], PC)).
 -define(FIX_SEC, {TN, FN} = ambiguous_mm_to_minutes(T, F, PC)).
 -define(FIX_DIGIT, {TN, FN} = ambiguous_digit_fix(T, F, PC)).
 -define(FIX_UNALIGNED_DIGIT, {TN, FN} = ambiguous_unaligned_digit_fix(T, F, PC)).
 -define(FIX_DEFAULTS, {TN, FN} = ambiguous_default(T, F, PC)).
+-define(FIX_DEFAULTS_EMPTY_FMT, {TN, FN} = ambiguous_default(T, [], PC)).
 -define(ADD_CF(Fmt), [Fmt|FN], Fmt).
 
 ambiguous_mm_to_minutes(T, F, PrevCode) ->
@@ -107,7 +109,6 @@ ambiguous_unaligned_digit_fix(T, F, PrevCode) ->
 		_ -> ambiguous_default(T, F, PrevCode)
 	end.
 
-ambiguous_default(T, F, false) -> {T, F};
 ambiguous_default(T, F, PrevCode) ->
 	case PrevCode of
 		ambiguous_mm ->
@@ -133,6 +134,7 @@ parse(<<>>, T, F, PC) -> ?FIX_DEFAULTS,
 	parse(R, with_type(TN, number), ?ADD_CF(nozero_digit));
 ?PARSE_CLAUSE("?") -> ?FIX_DIGIT,
 	parse(R, with_type(TN, number), ?ADD_CF(aligned_digit));
+?PARSE_CLAUSE_EMPTY_FMT("/") -> parse(R, T, [{str, "/"}], PC);
 ?PARSE_CLAUSE("/") ->
 	[PFormat|_] = F,
 	case fmt_is_digit(PFormat) of
@@ -149,6 +151,8 @@ parse(<<>>, T, F, PC) -> ?FIX_DEFAULTS,
 ?PARSE_CLAUSE("E+") -> ?FIX_DEFAULTS, parse(R, TN, ?ADD_CF(exponent));
 ?PARSE_CLAUSE("e-") -> ?FIX_DEFAULTS, parse(R, TN, ?ADD_CF(exponent));
 ?PARSE_CLAUSE("e+") -> ?FIX_DEFAULTS, parse(R, TN, ?ADD_CF(exponent));
+?PARSE_CLAUSE_EMPTY_FMT(",") -> ?FIX_DEFAULTS_EMPTY_FMT,
+	parse(R, TN, ?ADD_CF(scale_factor));
 ?PARSE_CLAUSE(",") -> ?FIX_DEFAULTS,
 	[PFormat|_] = FN,
 	case fmt_is_unaligned_digit(PFormat) of

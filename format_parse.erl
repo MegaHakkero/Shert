@@ -242,7 +242,7 @@ parse(<<"\\", C/utf8, R/binary>>, T, F, PC) ->
 % instructions
 ?PARSE_CLAUSE("[") -> ?FIX_DEFAULTS,
 	{I, R2} = parse_read_instruction(R),
-	parse(R2, TN, ?ADD_CF(I));
+	parse(R2, TN, ?ADD_CF({instructions, I}));
 
 parse(<<C/utf8, R/binary>>, T, F, PC) ->
 	parse(R, T, [{str, [C]}|F], PC).

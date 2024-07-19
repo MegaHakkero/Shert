@@ -60,7 +60,7 @@ parse(S) ->
 % code[0] = positive number type
 % code[1] = negative number type
 % code[2] = zero number type
-% code[3] is ignored, text format
+% code[3] = text format (why is this here???)
 -define(NUM_DEFAULT, {[number],[general_format]}).
 -define(TEXT_DEFAULT, {[number],[text]}).
 construct_code([P,N,Z,T|_]) -> {P,N,Z,T};
